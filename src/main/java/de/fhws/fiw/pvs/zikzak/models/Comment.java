@@ -6,28 +6,31 @@ import com.owlike.genson.annotation.JsonConverter;
 import com.owlike.genson.annotation.JsonDateFormat;
 import com.owlike.genson.annotation.JsonIgnore;
 import org.glassfish.jersey.linking.InjectLink;
+
 import javax.ws.rs.core.Link;
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
- * Created by Robin on 04.05.2017.
+ * Created by Robin on 21.06.2017.
  */
-public class Message {
+public class Comment
+{
     private String userid;
     private long id;
+    private long messageid;
     private String text;
     private Set<String> upVotes;
     private Set<String> downVotes;
-    private List<Comment> comments;
 
     @JsonDateFormat("yyyy-MM-dd'T'HH:mm:ss")
     private Date creationDate;
 
-    public Message( )
+    public Comment( )
     {
         this.upVotes = new HashSet<>( );
         this.downVotes = new HashSet<>( );
-        this.comments = new ArrayList<>( );
         this.creationDate = new Date( );
     }
 
@@ -50,6 +53,17 @@ public class Message {
     public void setId( long id )
     {
         this.id = id;
+    }
+
+    public long getMessageid( )
+    {
+        return messageid;
+    }
+
+    @JsonIgnore
+    public void setMessageid( long messageid )
+    {
+        this.messageid = messageid;
     }
 
     public String getText( )
@@ -82,24 +96,8 @@ public class Message {
         downVotes.add( userId );
     }
 
-    @JsonIgnore
-    public List<Comment> getComments( )
-    {
-        return comments;
-    }
-
-    public void addComment( Comment comment )
-    {
-        this.comments.add( comment );
-    }
-
-    public int getNumberOfComments()
-    {
-        return this.comments.size( );
-    }
-
     @InjectLink(style = InjectLink.Style.ABSOLUTE,
-            value = "messages/${instance.id}/upvotes",
+            value = "messages/${instance.messageid}/comments/${instance.id}/upvotes",
             type = "application/json", rel = "putUpvote")
     private Link upVoteLink;
 
@@ -116,7 +114,7 @@ public class Message {
     }
 
     @InjectLink(style = InjectLink.Style.ABSOLUTE,
-            value = "messages/${instance.id}/downvotes",
+            value = "messages/${instance.messageid}/comments/${instance.id}/downvotes",
             type = "application/json", rel = "putDownvote")
     private Link downVoteLink;
 
@@ -133,20 +131,20 @@ public class Message {
     }
 
     @InjectLink(style = InjectLink.Style.ABSOLUTE,
-            value = "messages/${instance.id}/comments?offset=0&size=10",
-            type = "application/json", rel = "getAllComments")
-    private Link commentLink;
+            value = "messages/${instance.messageid}/comments/${instance.id}",
+            type = "application/json", rel = "deleteComment")
+    private Link deleteComment;
 
     @JsonConverter( LinkConverter.class )
-    public Link getCommentLink( )
+    public Link getDeleteComment( )
     {
-        return commentLink;
+        return deleteComment;
     }
 
     @JsonIgnore
-    public void setCommentLink( Link commentLink )
+    public void setDeleteComment( Link deleteComment )
     {
-        this.commentLink = commentLink;
+        this.deleteComment = deleteComment;
     }
 
     public Date getCreationDate( )
@@ -158,23 +156,5 @@ public class Message {
     public void setCreationDate( Date creationDate )
     {
         this.creationDate = creationDate;
-    }
-
-    @InjectLink(style = InjectLink.Style.ABSOLUTE,
-            value = "messages/${instance.id}",
-            type = "application/json",
-            rel= "self")
-    private Link selfUri;
-
-    @JsonConverter( LinkConverter.class )
-    public Link getSelfUri( )
-    {
-        return selfUri;
-    }
-
-    @JsonIgnore
-    public void setSelfUri( Link selfUri )
-    {
-        this.selfUri = selfUri;
     }
 }
